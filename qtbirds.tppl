@@ -1,0 +1,49 @@
+type QTTree =
+    | QTLeaf {
+        age: Real,    
+        index: Int,
+        sequence: String,
+        character: String,
+        stateSequence: Int[],
+        characterState: Int
+    }
+    | QTNode {
+        left: QTTree,
+        right: QTTree,
+        age: Real
+    }
+
+function treeToString(tree: QTTree): String
+{
+    if (tree is QTLeaf) {
+        return join ( ["QTLeaf(", int2string(tree.index), ")"] );
+    } else {
+        return join ( ["QTNode(", treeToString(tree.left), ", ", treeToString(tree.right), ")"] );
+    }
+}
+
+model function qtbirds( tree: QTTree
+                      , normQChar: Tensor[Real]
+                      , normQMol: Tensor[Real]
+                      , lamShape: Real
+                      , lamScale: Real
+                      , muShape: Real
+                      , muScale: Real
+                      , nuShape: Real
+                      , nuScale: Real
+                      ): String 
+{
+    printMtx(normQChar);
+    printMtx(normQMol);
+    printLn(real2string(lamShape));
+    printLn(real2string(lamScale));
+    printLn(real2string(muShape));
+    printLn(real2string(muScale));
+    printLn(real2string(nuShape));
+    printLn(real2string(nuScale));
+
+    return treeToString(tree);
+}
+
+
+
