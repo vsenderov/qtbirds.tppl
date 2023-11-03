@@ -254,7 +254,6 @@ function coalesceQTTwig(tree: QTTree, m: ModelDynamics): QTTree
                                , partialLogWeight = partialLogWeight
                                };
 
-  printMtx(newTree.messageSequence[1]);
   return newTree;
 }
 
@@ -273,7 +272,7 @@ function getMessageSequence(tree: QTTree): Tensor[Real][]
     printMtx(tree.messageSequence[1]);
     let mesSeq = tree.messageSequence;
     return mesSeq;
-  }l
+  }
   
   else 
   {
