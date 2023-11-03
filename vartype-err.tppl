@@ -1,0 +1,18 @@
+type MyTree =  MyTree { 
+    age: Real,
+    left: MyTree,
+    right: MyTree
+  }
+
+model function qtbirds(tree: MyTree): Real 
+{
+  // let result = tree.left.age; // doesn't work
+  let leftTree = tree.left;
+  let result = getAge(leftTree);
+  return result;
+}
+
+function getAge(tree: MyTree): Real
+{
+	return tree.age;
+}
