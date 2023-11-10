@@ -62,7 +62,10 @@ type ModelDynamics = ModelDynamics { qChar: Tensor[Real]
 //                                 , molMessages: Real[][]
                                    }
 
-
+type QTParm = QTParm { lambda: Real
+                     , mu: Real
+                     , nu: Real
+                     }
 /**
 * Q-T-BIRDS model
 *
@@ -104,7 +107,7 @@ model function qtbirds(tree: QTTree
                       , muScale: Real
                       , nuShape: Real
                       , nuScale: Real
-                      ): Real 
+                      ): Real[] 
 {
   // printMtx(normQChar);
   // printMtx(jChar);
@@ -136,7 +139,7 @@ model function qtbirds(tree: QTTree
 
   let something = coalesceQTTree(tree, m);
 
-  return mu;
+  return [lam, mu, nu];
 }
 
 
@@ -242,8 +245,17 @@ function coalesceQTTwig(tree: QTTree, m: ModelDynamics): QTTree
 
   let logWeightSequence = sapply(newMessageSequence, computeMessageLogLikelihood);
 
-  let newLeftCharMessage = evolveCharacter(leftCharacterMessage, m, leftTime);
-  let newRightCharMessage = evolveCharacter(rightCharacterMessage, m, rightTime);
+  let newLeftCharMessage = evolveCharacter( leftCharacterMessage
+                                          , m
+                                          , leftTime
+                                          , leftMessageSequenceEvolution.characterJumps
+                                          );
+
+  let newRightCharMessage = evolveCharacter( rightCharacterMessage
+                                           , m
+                                           , rightTime
+                                           , rightMessageSequenceEvolution.characterJumps
+                                           );
 
   let newCharMessage = mtxElemMul(newLeftCharMessage, newRightCharMessage);
   let logWeightChar = computeMessageLogLikelihood(newCharMessage);
@@ -288,7 +300,8 @@ function getMessageSequence(tree: QTTree): Tensor[Real][]
   {
     //let mesSeq = tree.messageSequence; // doesn't work
     // workaround reconstruct sequence
-    let mesSeq = sapply(tree.messageSequence, idTensorReal);    
+    //let mesSeq = sapply(tree.messageSequence, idTensorReal);   
+    let mesSeq = idSTensorReal(tree.messageSequence); // also works
     return mesSeq;
   }
   
@@ -380,10 +393,10 @@ function evolveMessageClosure ( dyn: ModelDynamics
 }
 
 
-function evolveCharacter(mes: Tensor[Real], m: ModelDynamics, t: Real): Tensor[Real]
+function evolveCharacter(mes: Tensor[Real], m: ModelDynamics, t: Real, sJumps: Int): Tensor[Real]
 {
   // TODO on top of that we need to add the s-jumps
-  let res = mes *@ (mtxExp(m.qChar *$ t));
+  let res = mes *@ ( (m.jChar ^$ sJumps) *@ (mtxExp(m.qChar *$ t)) );
   return res;
 }
 
@@ -430,10 +443,26 @@ function computeMessageLogLikelihood(mes: Tensor[Real]): Real
 }
 
 
+// https://patorjk.com/software/taag/#p=testall&h=1&v=1&f=Univers&t=WORKAROUNDS
+//  __          __ ____   _____   _  __           _____    ____   _    _  _   _  _____    _____ 
+//  \ \        / // __ \ |  __ \ | |/ /    /\    |  __ \  / __ \ | |  | || \ | ||  __ \  / ____|
+//   \ \  /\  / /| |  | || |__) || ' /    /  \   | |__) || |  | || |  | ||  \| || |  | || (___  
+//    \ \/  \/ / | |  | ||  _  / |  <    / /\ \  |  _  / | |  | || |  | || . ` || |  | | \___ \ 
+//     \  /\  /  | |__| || | \ \ | . \  / ____ \ | | \ \ | |__| || |__| || |\  || |__| | ____) |
+//      \/  \/    \____/ |_|  \_\|_|\_\/_/    \_\|_|  \_\ \____/  \____/ |_| \_||_____/ |_____/ 
+                                                                                             
+                                                                                             
+
+//https://patorjk.com/software/taag/#p=testall&h=1&v=1&f=Univers&t=WORKAROUNDS
 
 
-
-///// WORKAROUNDS
+// ██╗    ██╗ ██████╗ ██████╗ ██╗  ██╗ █████╗ ██████╗  ██████╗ ██╗   ██╗███╗   ██╗██████╗ ███████╗
+// ██║    ██║██╔═══██╗██╔══██╗██║ ██╔╝██╔══██╗██╔══██╗██╔═══██╗██║   ██║████╗  ██║██╔══██╗██╔════╝
+// ██║ █╗ ██║██║   ██║██████╔╝█████╔╝ ███████║██████╔╝██║   ██║██║   ██║██╔██╗ ██║██║  ██║███████╗
+// ██║███╗██║██║   ██║██╔══██╗██╔═██╗ ██╔══██║██╔══██╗██║   ██║██║   ██║██║╚██╗██║██║  ██║╚════██║
+// ╚███╔███╔╝╚██████╔╝██║  ██║██║  ██╗██║  ██║██║  ██║╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝███████║
+//  ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚══════╝
+                                                                                               
 
 
 function getAgeDiff(parent: QTTree, child: QTTree)
@@ -443,6 +472,12 @@ function getAgeDiff(parent: QTTree, child: QTTree)
 
 
 function idTensorReal(t: Tensor[Real])
+{
+  return t;
+}
+
+
+function idSTensorReal(t: Tensor[Real][])
 {
   return t;
 }
