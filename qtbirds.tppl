@@ -52,6 +52,17 @@ function tree2string(tree: QTTree): String
   }
 }
 
+function distChoice(uniform: Bool, a: Real, b: Real): Real
+{
+  if (uniform) {
+    assume x ~ Uniform(a, b);
+    return x;
+  } else {
+    assume x ~ Gamma(a, b);
+    return x;
+  }
+}
+
 
 type ModelDynamics = ModelDynamics { qChar: Tensor[Real]
                                    , jChar: Tensor[Real]
@@ -81,21 +92,29 @@ type QTParm = QTParm { lambda: Real
 *    Jump matrix for the gene
 * @param lamShape: Real
 *    Hyperparameter of the Gamma distribution for the phenotype transition rate
+*    (or a if Uniform)
 * @param lamScale: Real
 *    Hyperparameter of the Gamma distribution for the phenotype transition rate
+*    (or b if Uniform)
 * @param muShape: Real
 *    Hyperparameter of the Gamma distribution for the gene transition rate
+*    (or a if Uniform)
 * @param muScale: Real
 *    Hyperparameter of the Gamma distribution for the gene transition rate
+*    (or b if Uniform)
 * @param nuShape: Real
 *    Hyperparameter of the Gamma distribution for the joint transition rate
+*    (or a if Uniform)
 * @param nuScale: Real
 *    Hyperparameter of the Gamma distribution for the joint transition rate
+*    (or b if Uniform)
+* @param uniform: Bool
+*    If true, use a uniform distribution instead
 *    
 * @return String
 *    Description of the return value
 */
-model function qtbirds(tree: QTTree
+model function qtbirds( tree: QTTree
                       , normQChar: Tensor[Real]
                       , jChar: Tensor[Real]
                       , charMessages: Real[][]
@@ -107,6 +126,7 @@ model function qtbirds(tree: QTTree
                       , muScale: Real
                       , nuShape: Real
                       , nuScale: Real
+                      , uniform: Bool
                       ): Real[] 
 {
   // printMtx(normQChar);
@@ -120,12 +140,14 @@ model function qtbirds(tree: QTTree
   // printLn(real2string(nuShape));
   // printLn(real2string(nuScale));
 
-  assume lam ~ Gamma(lamShape, lamScale);
-  assume mu ~ Gamma(muShape, muScale);
-  //let lam = 0.35;
-  //let mu = 0.21;
+  //assume lam ~ Gamma(lamShape, lamScale);
+  let lam = distChoice(uniform, lamShape, lamScale);
   
-  assume nu ~ Gamma(nuShape, nuScale);
+  //assume mu ~ Gamma(muShape, muScale);
+  let mu = distChoice(uniform, muShape, muScale);
+  
+  //assume nu ~ Gamma(nuShape, nuScale);
+  let nu = distChoice(uniform, nuShape, nuScale);
 
 
   // $* scalar multiplication
